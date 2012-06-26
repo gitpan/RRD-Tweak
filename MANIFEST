@@ -11,8 +11,10 @@ t/05-manifest.t
 t/05-pod-coverage.t
 t/05-pod.t
 t/10-create_rrd.t
+t/20-leaktrace.skip
 t/20-load_save_rrd.t
 t/30-add_del_ds_rra.t
+t/30-add_rra.t
 t/30-modify_ds.t
 t/30-modify_rra.t
 Makefile.PL
