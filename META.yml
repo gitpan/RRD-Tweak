@@ -1,6 +1,6 @@
 ---
 name: RRD-Tweak
-version: 0.02
+version: 0.03
 author:
   - 'Stanislav Sinyagin <ssinyagin@k-open.com>'
 abstract: RRD file manipulation
@@ -20,7 +20,7 @@ configure_requires:
 provides:
   RRD::Tweak:
     file: lib/RRD/Tweak.pm
-    version: 0.02
+    version: 0.03
 generated_by: Module::Build version 0.340201
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
