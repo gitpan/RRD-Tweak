@@ -7,7 +7,7 @@ use Carp;
 
 use base 'DynaLoader';
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 bootstrap RRD::Tweak;
 
 # Internal object structure:
@@ -1254,10 +1254,13 @@ sub del_rra {
               $del_rra_index);
     }
 
-    for( my $rra=0; $rra < $n_rra; $rra++) {
+    # Holt-Winters RRA refer to other array indices, so we adjust the
+    # references which are affected by this deletion
+    for( my $rra = $del_rra_index+1; $rra < $n_rra; $rra++) {
         if( $hw_rra_name{$self->{'rra'}[$rra]{cf}} ) {
-            croak('del_rra() is not currently supported for RRD files ' .
-                  'containing Holt-Winters RRA')
+            if( $self->{'rra'}[$rra]{'dependent_rra_idx'} >= $del_rra_index ) {
+                $self->{'rra'}[$rra]{'dependent_rra_idx'}--;
+            }
         }
     }
 
@@ -1435,6 +1438,29 @@ sub info {
 
 
 
+=head2 has_hwpredict
+
+ my $hw_status = $rrd->has_hwpredict();
+
+The method returns true if any of Holt-Winters RRA exist in the RRD file.
+
+=cut
+
+sub has_hwpredict {
+    my $self = shift;
+    my $ds_index = shift;
+
+    my $n_rra = scalar(@{$self->{'rra'}});
+    for( my $rra=0; $rra < $n_rra; $rra++) {
+        if( $hw_rra_name{$self->{'rra'}[$rra]{'cf'}} ) {
+            return 1;
+        }
+    }
+    return 0;
+}
+    
+
+
 
 =head2 ds_descr
 
@@ -1452,7 +1478,8 @@ sub ds_descr {
     my $n_ds = scalar(@{$self->{'ds'}});
 
     if( $ds_index < 0 or $ds_index >= $n_ds ) {
-        croak('ds_descr(): DS index is outside of allowed range: ' . $ds_index);
+        croak('ds_descr(): DS index is outside of allowed range: ' .
+              $ds_index);
     }
 
     my $ds_attr = $self->{'ds'}[$ds_index];
@@ -1461,7 +1488,7 @@ sub ds_descr {
 
     if( $ds_attr->{'type'} ne 'COMPUTE' ) {
         $ret .= ':' . $ds_attr->{'hb'};
-        
+
         foreach my $key ('min', 'max') {
             if( $ds_attr->{$key} !~ /^-?nan$/i ) {
                 $ret .= ':' . $ds_attr->{$key};

@@ -1,6 +1,7 @@
 Build.PL
 Changes
 cmds.gdb
+DEBUGGING
 lib/RRD/Tweak.pm
 lib/RRD/Tweak.xs
 Makefile.PL
@@ -8,7 +9,6 @@ MANIFEST			This list of files
 META.yml
 README
 t/00-load.t
-t/05-boilerplate.t
 t/05-manifest.t
 t/05-pod-coverage.t
 t/05-pod.t
@@ -17,5 +17,6 @@ t/20-leaktrace.skip
 t/20-load_save_rrd.t
 t/30-add_del_ds_rra.t
 t/30-add_rra.t
+t/30-del_rra_holtwinters.t
 t/30-modify_ds.t
 t/30-modify_rra.t

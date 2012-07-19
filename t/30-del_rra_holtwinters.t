@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 11;
+use Test::More tests => 8;
 
 use File::Temp qw/tmpnam/;
 use RRDs;
@@ -17,22 +17,21 @@ BEGIN {
 diag("Testing RRD::Tweak $RRD::Tweak::VERSION, Perl $], $^X");
 
 my $filename1 = tmpnam();
-my $filename2 = tmpnam();
 
 # 1326585600 = Sun Jan 15 01:00:00 2012
 RRDs::create($filename1, '--step', '300',
              '--start', '1326585600',
              'DS:x1:GAUGE:600:-1e10:1e15',
              'DS:x2:GAUGE:600:0.0001:U',
+             
              'RRA:AVERAGE:0.5:1:1200',
-             'RRA:HWPREDICT:1440:0.1:0.0035:288:3',
-             'RRA:SEASONAL:288:0.1:2',
-             'RRA:DEVPREDICT:1440:5',
-             'RRA:DEVSEASONAL:288:0.1:2',
-             'RRA:FAILURES:288:7:9:5',
+             'RRA:AVERAGE:0.5:12:2400',
+             
+             'RRA:HWPREDICT:1440:0.1:0.0035:288',
+             
              'RRA:MIN:0.5:12:2400',
              'RRA:MAX:0.5:12:2400',
-             'RRA:AVERAGE:0.5:12:2400');
+             );
 
 my $err = RRDs::error();
 ok((not $err), "creating RRD file: $filename1") or
@@ -63,36 +62,36 @@ $err = RRDs::error();
 ok((not $err), "updating RRD file: $filename1") or
     BAIL_OUT("Cannot update RRD file: " . $err);
 
-diag("Created $filename1");
 
-my $rrd1 = RRD::Tweak->new();
-$rrd1->load_file($filename1);
-ok($rrd1->validate(), "validate()") or diag($rrd1->errmsg());
+my $rrd = RRD::Tweak->new();
+ok((defined($rrd)), "RRD::Tweak->new()");
 
-$rrd1->modify_rra(6, {rows => 3000});
+diag("\$rrd->load_file($filename1)");
+$rrd->load_file($filename1);
 
-$rrd1->save_file($filename2);
-diag("Saved $filename2");
+$rrd->del_rra(1);
+$rrd->del_rra(7);
 
-$rrd1->clean();
-$rrd1->load_file($filename1);
-ok($rrd1->validate(), "validate()") or diag($rrd1->errmsg());
+my $info = $rrd->info();
+ok(scalar(@{$info->{rra}}) == 7) or
+    diag('Wrong number of RRA: ' . scalar(@{$info->{rra}}) . ', expected 7');
 
-my $rrd2 = RRD::Tweak->new();
-$rrd2->load_file($filename2);
-ok($rrd2->validate(), "validate()") or diag($rrd2->errmsg());
+ok($info->{rra}[1]{'dependent_rra_idx'} == 2) or
+    diag('{rra}[1]{dependent_rra_idx} != 2');
 
-ok($rrd1->{cdp_data}[6][2400-1][0] == 300);
-ok($rrd2->{cdp_data}[6][3000-1][0] == 300);
+ok($info->{rra}[2]{'dependent_rra_idx'} == 1) or
+    diag('{rra}[2]{dependent_rra_idx} != 1');
+
+
+#my $filename2 = tmpnam();
+#diag("Saving $filename2");
+#$rrd->save_file($filename2);
+#diag("Saved $filename2");
+
 
 ok((unlink $filename1), "unlink $filename1");
-ok((unlink $filename2), "unlink $filename2");
+#ok((unlink $filename2), "unlink $filename2");
 
-$rrd2->modify_rra(6, {xff => 0.75});
-my $rrd2_info = $rrd2->info();
-
-ok(($rrd2_info->{rra}[6]{xff} == 0.75), "xff==0.75") or
-    diag("xff: " . $rrd2_info->{rra}[6]{xff});
 
 
 

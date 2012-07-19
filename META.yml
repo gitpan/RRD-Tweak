@@ -19,9 +19,9 @@ name: RRD-Tweak
 provides:
   RRD::Tweak:
     file: lib/RRD/Tweak.pm
-    version: 0.08
+    version: 0.09
 requires:
   perl: v5.8.8
 resources:
   license: http://opensource.org/licenses/gpl-license.php
-version: 0.08
+version: 0.09
